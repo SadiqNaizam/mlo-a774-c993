@@ -23,6 +23,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AlertCircle, Info } from 'lucide-react'; // Icons for alerts or info
 
+// Recharts & Shadcn Chart Components
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
 // Define Zod schema for the Spot trading form
 const spotFormSchema = z.object({
   orderType: z.enum(['market', 'limit'], { required_error: "Order type is required." }),
@@ -48,6 +56,25 @@ const NeumorphicButtonWrapper: React.FC<{ children: React.ReactNode; className?:
     {children}
   </div>
 );
+
+// Mock price data for the chart
+const mockChartData = [
+  { date: 'Jan', price: 60000 },
+  { date: 'Feb', price: 61500 },
+  { date: 'Mar', price: 63000 },
+  { date: 'Apr', price: 62000 },
+  { date: 'May', price: 65000 },
+  { date: 'Jun', price: 64000 },
+  { date: 'Jul', price: 66000 },
+  { date: 'Aug', price: 68050.12 }, // Current price from HomeDashboardPage for consistency
+];
+
+const chartConfig = {
+  price: {
+    label: "BTC Price (USDT)",
+    color: "hsl(var(--primary))", // Use primary theme color
+  },
+};
 
 
 const TradingInterfacePage = () => {
@@ -256,10 +283,54 @@ const TradingInterfacePage = () => {
         <div className="p-2 md:p-4 flex flex-col lg:flex-row gap-2 md:gap-4">
           {/* Left Side: Chart and Order Book */}
           <div className="lg:w-2/3 flex flex-col gap-2 md:gap-4">
-            {/* InteractiveMarketChart Placeholder */}
+            {/* InteractiveMarketChart */}
             <Card className="flex-grow min-h-[250px] md:min-h-[350px] bg-neutral-800/70 border-neutral-700/50 backdrop-blur-sm">
-              <CardContent className="p-1 md:p-2 h-full flex items-center justify-center">
-                <p className="text-neutral-400 text-sm">Interactive Market Chart Area (e.g., TradingView Integration)</p>
+              <CardContent className="p-1 md:p-2 h-full">
+                <ChartContainer config={chartConfig} className="w-full h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      accessibilityLayer
+                      data={mockChartData}
+                      margin={{
+                        top: 5,
+                        right: 20,
+                        left: 0,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--muted-foreground)/0.3)" />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        tickFormatter={(value) => value.slice(0, 3)}
+                        stroke="hsl(var(--muted-foreground))"
+                        className="text-xs"
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        orientation="right"
+                        tickFormatter={(value) => `$${(value / 1000)}k`}
+                        stroke="hsl(var(--muted-foreground))"
+                        className="text-xs"
+                      />
+                      <ChartTooltip
+                        cursor={true}
+                        content={<ChartTooltipContent indicator="line" labelClassName="text-background" className="bg-neutral-100 text-neutral-900" />}
+                      />
+                      <Line
+                        dataKey="price"
+                        type="monotone"
+                        strokeWidth={2}
+                        stroke={chartConfig.price.color}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
             {/* OrderBookVisualizer Placeholder */}
@@ -319,31 +390,4 @@ const TradingInterfacePage = () => {
       <AppBottomTabBar />
 
       {/* Order Confirmation Dialog */}
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent className="bg-neutral-800 border-neutral-700 text-white">
-          <DialogHeader>
-            <DialogTitle>Order Confirmation</DialogTitle>
-            <DialogDescription className="text-neutral-400">
-              Your order has been submitted.
-            </DialogDescription>
-          </DialogHeader>
-          {submittedOrderData && (
-            <div className="text-sm space-y-1 mt-2">
-              <p><strong>Type:</strong> {submittedOrderData.type}</p>
-              <p><strong>Pair:</strong> {submittedOrderData.pair}</p>
-              {submittedOrderData.orderType && <p><strong>Order Type:</strong> {submittedOrderData.orderType}</p>}
-              {submittedOrderData.price && <p><strong>Price:</strong> {submittedOrderData.price} USDT</p>}
-              <p><strong>Amount:</strong> {submittedOrderData.amount} BTC</p>
-              {submittedOrderData.leverage && <p><strong>Leverage:</strong> {submittedOrderData.leverage}x</p>}
-            </div>
-          )}
-          <DialogFooter className="mt-4">
-            <Button onClick={() => setIsConfirmDialogOpen(false)} className="bg-blue-500 hover:bg-blue-600">OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default TradingInterfacePage;
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>\n        <DialogContent className="bg-neutral-800 border-neutral-700 text-white">\n          <DialogHeader>\n            <DialogTitle>Order Confirmation</DialogTitle>\n            <DialogDescription className="text-neutral-400">\n              Your order has been submitted.\n            </DialogDescription>\n          </DialogHeader>\n          {submittedOrderData && (\n            <div className="text-sm space-y-1 mt-2">\n              <p><strong>Type:</strong> {submittedOrderData.type}</p>\n              <p><strong>Pair:</strong> {submittedOrderData.pair}</p>\n              {submittedOrderData.orderType && <p><strong>Order Type:</strong> {submittedOrderData.orderType}</p>}\n              {submittedOrderData.price && <p><strong>Price:</strong> {submittedOrderData.price} USDT</p>}\n              <p><strong>Amount:</strong> {submittedOrderData.amount} BTC</p>\n              {submittedOrderData.leverage && <p><strong>Leverage:</strong> {submittedOrderData.leverage}x</p>}\n            </div>\n          )}\n          <DialogFooter className="mt-4">\n            <Button onClick={() => setIsConfirmDialogOpen(false)} className="bg-blue-500 hover:bg-blue-600">OK</Button>\n          </DialogFooter>\n        </DialogContent>\n      </Dialog>\n    </div>\n  );\n};\n\nexport default TradingInterfacePage;
